@@ -19,6 +19,16 @@ func ShowIndex(w http.ResponseWriter, r *http.Request) {
   http.ServeFile(w, r, "views/index.html")
 }
 
+func ShowManage(w http.ResponseWriter, r *http.Request) {
+  cookie := http.Cookie {
+    Name: "authorized",
+    Value: "true",
+    Secure: true,
+  }
+  http.SetCookie(w, &cookie)
+  http.ServeFile(w, r, "views/manage.html")
+}
+
 func HandleOTP(w http.ResponseWriter, r *http.Request) {
   if r.Method == "POST" {
     err := r.ParseForm()
@@ -31,14 +41,8 @@ func HandleOTP(w http.ResponseWriter, r *http.Request) {
 
       str_i, _ := strconv.ParseUint(str, 10, 32)
       if cmp == uint32(str_i) {
-        cookie := http.Cookie {
-          Name: "authorized",
-          Value: "true",
-          Secure: true,
-        }
-        http.SetCookie(w, &cookie)
-        http.Redirect(w, r, "/manage", 302)
         fmt.Printf("authorized\n")
+        http.Redirect(w, r, "/manage", 302)
       } else {
         // Set some variable accessible by view...?
         http.Redirect(w, r, "/", 302)
@@ -49,6 +53,7 @@ func HandleOTP(w http.ResponseWriter, r *http.Request) {
 
 func main() {
   http.HandleFunc("/", ShowIndex)
+  http.HandleFunc("/manage", ShowManage)
   http.HandleFunc("/requireOTP", HandleOTP)
   fmt.Printf("Listening on 0.0.0.0:8080...\n")
   log.Fatal(http.ListenAndServe(":8080", nil))
