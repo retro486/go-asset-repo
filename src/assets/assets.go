@@ -1,12 +1,14 @@
 package assets
 
 import (
+  "github.com/gorilla/mux"
   "auth"
   "net/http"
   "html/template"
   "fmt"
   "log"
   "database/sql"
+  "strconv"
   _ "github.com/mattn/go-sqlite3"
 )
 
@@ -61,7 +63,7 @@ func CreateAsset(asset Asset) (Asset, error) {
   return asset, nil
 }
 
-func DestroyAsset(id int) error {
+func DestroyAsset(id int64) error {
   dbConn := GetDBConnection()
   defer dbConn.Close()
 
@@ -121,6 +123,14 @@ func LoadStoredAssets() []Asset {
   rows.Close()
 
   return assets
+}
+
+func ControllerDestroyAsset(w http.ResponseWriter, r *http.Request) {
+  vars := mux.Vars(r)
+  id, _ := strconv.ParseInt(vars["id"], 10, 32)
+
+  _ = DestroyAsset(id)
+  http.Redirect(w, r, "/assets", 302)
 }
 
 func ShowIndex(w http.ResponseWriter, r *http.Request) {

@@ -18,9 +18,14 @@ func ShowIndex(w http.ResponseWriter, r *http.Request) {
 func main() {
   r := mux.NewRouter()
   r.HandleFunc("/", ShowIndex)
-  r.HandleFunc("/manage", assets.ShowIndex)
+
   r.HandleFunc("/login", auth.Login).Methods("POST")
   r.HandleFunc("/logout", auth.Logout)
+
+  r.HandleFunc("/assets", assets.ShowIndex)
+  r.HandleFunc("/assets/{id}/destroy/", assets.ControllerDestroyAsset)
+  // r.HandleFunc("/assets/{id}/edit/", assets.ControllerEditAsset)
+
   http.Handle("/", r)
 
   fmt.Printf("Listening on 0.0.0.0:8080...\n")

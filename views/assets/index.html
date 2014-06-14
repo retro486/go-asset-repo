@@ -4,7 +4,12 @@
     <title>Asset Manager</title>
     <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
     <script>
-
+    $(document).on('click', '.confirm', function(e) {
+      if(confirm('Are you sure?') !== true) {
+        e.preventDefault();
+        return false;
+      }
+    });
     </script>
     <style>
     table.asset-table {
@@ -46,8 +51,8 @@
         <td><div>{{.Name}}</div></td>
         <td><div><a href="{{.URL}}" target="_blank">{{.URL}}</a></div></td>
         <td><div>
-          <a href="#{{.Id}}">Edit</a>
-          <a href="#{{.Id}}">Delete</a>
+          <a href="/assets/{{.Id}}/edit/">Edit</a>
+          <a href="/assets/{{.Id}}/destroy/" class="confirm">Delete</a>
         </div></td>
       </tr>
     {{end}}
