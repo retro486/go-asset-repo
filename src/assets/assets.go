@@ -6,12 +6,12 @@ import (
   "html/template"
   "fmt"
   "log"
-  "errors"
   "database/sql"
   _ "github.com/mattn/go-sqlite3"
 )
 
 type Asset struct {
+  Id int
   URL string
   Name string
   IsImage bool // for determining if a thumbnail preview should be shown
@@ -25,7 +25,6 @@ func GetDBConnection() *sql.DB {
   if err != nil {
     return nil
   }
-  defer db.Close()
 
   // TODO if new database then run this
   _, err = db.Exec(dbCreateSQL)
@@ -39,21 +38,22 @@ func GetDBConnection() *sql.DB {
 // Stores the given asset in the db. Returns nil if fail, the given Asset if success.
 func SaveAsset(asset Asset) (Asset, error) {
   dbConn := GetDBConnection()
+  defer dbConn.Close()
 
   tx, err := dbConn.Begin()
   if err != nil {
-    return Asset{}, errors.New("Unable to start db transaction.")
+    return Asset{}, err
   }
 
   stmt, err := tx.Prepare("insert into assets(name, url, isimage) values (?, ?, ?)")
   if err != nil {
-    return Asset{}, errors.New("Unable to start db transaction.")
+    return Asset{}, err
   }
   defer stmt.Close()
 
   _, err = stmt.Exec(asset.Name, asset.URL, asset.IsImage)
   if err != nil {
-    return Asset{}, errors.New("Unable to start db transaction.")
+    return Asset{}, err
   }
 
   tx.Commit()
@@ -64,24 +64,37 @@ func SaveAsset(asset Asset) (Asset, error) {
 func LoadStoredAssets() []Asset {
   // TODO
   dbConn := GetDBConnection()
+  defer dbConn.Close()
   assets := []Asset{}
 
-  rows, err := dbConn.Query("select * from assets")
+  // _, err := SaveAsset(Asset{URL:"http://www.google.com", Name:"Google", IsImage:false})
+  // if err != nil {
+  //   fmt.Printf("%s\n", fmt.Errorf("%v", err))
+  // }
+  // _, err = SaveAsset(Asset{URL:"http://www.yahoo.com", Name:"Yahoo", IsImage:false})
+  // if err != nil {
+  //   fmt.Printf("%s\n", fmt.Errorf("%v", err))
+  // }
+  // _, err = SaveAsset(Asset{URL:"http://minionslovebananas.com/images/check-in-minion.jpg", Name:"Minion", IsImage:true})
+  // if err != nil {
+  //   fmt.Printf("%s\n", fmt.Errorf("%v", err))
+  // }
+
+  rows, err := dbConn.Query("select id, name, url, isimage from assets")
   if err != nil {
     return nil
   }
   defer rows.Close()
 
   for rows.Next() {
-    asset := Asset{}
-    rows.Scan(&asset.Name, &asset.URL, &asset.IsImage)
-    assets = append(assets, asset)
+    var id int
+    var name string
+    var url string
+    var isImage bool
+    rows.Scan(&id, &name, &url, &isImage)
+    assets = append(assets, Asset{Id: id, URL: url, Name: name, IsImage: isImage})
   }
   rows.Close()
-
-  // assets = append(assets, Asset{URL:"http://www.google.com", Name:"Google", IsImage:false})
-  // assets = append(assets, Asset{URL:"http://www.yahoo.com", Name:"Yahoo", IsImage:false})
-  // assets = append(assets, Asset{URL:"http://minionslovebananas.com/images/check-in-minion.jpg", Name:"Minion", IsImage:true})
 
   return assets
 }
