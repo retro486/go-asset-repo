@@ -1,13 +1,56 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <title>Asset Manager</title>
     <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
     <script>
 
     </script>
+    <style>
+    table.asset-table {
+      margin: 12px 0;
+    }
+    table.asset-table td {
+      border: 1px solid #000;
+    }
+    table.asset-table td img {
+      width: 100px;
+    }
+    table.asset-table td div {
+      padding: 5px;
+      text-align: center;
+    }
+    </style>
   </head>
   <body>
-    <h1>Manage</h1>
-    <a href="/logout">Log out</a>
+    <h1>Assets</h1>
+    <ul>
+      <li><a href="/logout">Log out</a></li>
+      <li><a href="#">New Asset</a></li>
+    </ul>
+
+    <table class="asset-table">
+      <tr>
+        <th>Preview</th>
+        <th>Name</th>
+        <th>Link</th>
+        <th>Actions</th>
+      </tr>
+    {{range .Assets}}
+      <tr>
+        <td><div>
+          {{if .IsImage}}<img src="{{.URL}}" alt="{{.Name}}" />
+          {{else}}No preview
+          {{end}}
+        </div></td>
+        <td><div>{{.Name}}</div></td>
+        <td><div><a href="{{.URL}}" target="_blank">{{.URL}}</a></div></td>
+        <td><div>
+          <a href="#">Edit</a>
+          <a href="#">Delete</a>
+        </div></td>
+      </tr>
+    {{end}}
+    </table>
   </body>
 </html>
