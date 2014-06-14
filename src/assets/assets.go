@@ -11,7 +11,7 @@ import (
 )
 
 type Asset struct {
-  Id int
+  Id int64
   URL string
   Name string
   IsImage bool // for determining if a thumbnail preview should be shown
@@ -26,7 +26,6 @@ func GetDBConnection() *sql.DB {
     return nil
   }
 
-  // TODO if new database then run this
   _, err = db.Exec(dbCreateSQL)
   if err == nil {
     log.Printf("Created database")
@@ -35,8 +34,8 @@ func GetDBConnection() *sql.DB {
   return db
 }
 
-// Stores the given asset in the db. Returns nil if fail, the given Asset if success.
-func SaveAsset(asset Asset) (Asset, error) {
+// Stores the given asset in the db. Returns nil if fail, the given Asset with Id if success.
+func CreateAsset(asset Asset) (Asset, error) {
   dbConn := GetDBConnection()
   defer dbConn.Close()
 
@@ -51,31 +50,56 @@ func SaveAsset(asset Asset) (Asset, error) {
   }
   defer stmt.Close()
 
-  _, err = stmt.Exec(asset.Name, asset.URL, asset.IsImage)
+  result, err := stmt.Exec(asset.Name, asset.URL, asset.IsImage)
   if err != nil {
     return Asset{}, err
   }
 
   tx.Commit()
 
+  asset.Id, _ = result.LastInsertId()
   return asset, nil
 }
 
+func DestroyAsset(id int) error {
+  dbConn := GetDBConnection()
+  defer dbConn.Close()
+
+  tx, err := dbConn.Begin()
+  if err != nil {
+    return err
+  }
+
+  stmt, err := tx.Prepare("delete from assets where id = ?")
+  if err != nil {
+    return err
+  }
+  defer stmt.Close()
+
+  _, err = stmt.Exec(id)
+  if err != nil {
+    return err
+  }
+
+  tx.Commit()
+
+  return nil
+}
+
 func LoadStoredAssets() []Asset {
-  // TODO
   dbConn := GetDBConnection()
   defer dbConn.Close()
   assets := []Asset{}
 
-  // _, err := SaveAsset(Asset{URL:"http://www.google.com", Name:"Google", IsImage:false})
+  // _, err := CreateAsset(Asset{URL:"http://www.google.com", Name:"Google", IsImage:false})
   // if err != nil {
   //   fmt.Printf("%s\n", fmt.Errorf("%v", err))
   // }
-  // _, err = SaveAsset(Asset{URL:"http://www.yahoo.com", Name:"Yahoo", IsImage:false})
+  // _, err = CreateAsset(Asset{URL:"http://www.yahoo.com", Name:"Yahoo", IsImage:false})
   // if err != nil {
   //   fmt.Printf("%s\n", fmt.Errorf("%v", err))
   // }
-  // _, err = SaveAsset(Asset{URL:"http://minionslovebananas.com/images/check-in-minion.jpg", Name:"Minion", IsImage:true})
+  // _, err = CreateAsset(Asset{URL:"http://minionslovebananas.com/images/check-in-minion.jpg", Name:"Minion", IsImage:true})
   // if err != nil {
   //   fmt.Printf("%s\n", fmt.Errorf("%v", err))
   // }
@@ -87,7 +111,7 @@ func LoadStoredAssets() []Asset {
   defer rows.Close()
 
   for rows.Next() {
-    var id int
+    var id int64
     var name string
     var url string
     var isImage bool
@@ -102,8 +126,10 @@ func LoadStoredAssets() []Asset {
 func ShowIndex(w http.ResponseWriter, r *http.Request) {
   error := false
   auth.CheckAuthCookie(w, r)
-  tmpl, _ := template.ParseFiles("views/assets/index.html")
   assets := LoadStoredAssets()
+
+  tmpl, _ := template.ParseFiles("views/assets/index.html")
+
   err := tmpl.Execute(w, map[string]interface{} { "Assets": assets })
   if err != nil {
     fmt.Printf("Unable to write template to response.\n")
