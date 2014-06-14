@@ -3,6 +3,7 @@ package main
 
 import (
   "auth"
+  "assets"
   "github.com/gorilla/mux"
   "fmt"
   "log"
@@ -14,16 +15,11 @@ func ShowIndex(w http.ResponseWriter, r *http.Request) {
   http.ServeFile(w, r, "views/index.html")
 }
 
-func ShowManage(w http.ResponseWriter, r *http.Request) {
-  auth.CheckAuthCookie(w, r)
-  http.ServeFile(w, r, "views/manage.html")
-}
-
 func main() {
   r := mux.NewRouter()
   r.HandleFunc("/", ShowIndex)
-  r.HandleFunc("/manage", ShowManage)
-  r.HandleFunc("/requireOTP", auth.HandleOTP)
+  r.HandleFunc("/manage", assets.ShowIndex)
+  r.HandleFunc("/login", auth.Login).Methods("POST")
   r.HandleFunc("/logout", auth.Logout)
   http.Handle("/", r)
 

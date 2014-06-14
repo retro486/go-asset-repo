@@ -67,7 +67,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
   http.Redirect(w, r, "/", 302)
 }
 
-func HandleOTP(w http.ResponseWriter, r *http.Request) {
+func Login(w http.ResponseWriter, r *http.Request) {
   if r.Method == "POST" {
     err := r.ParseForm()
     if err != nil {
