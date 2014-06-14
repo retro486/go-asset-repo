@@ -10,21 +10,21 @@ import (
   "net/http"
 )
 
-func ShowIndex(w http.ResponseWriter, r *http.Request) {
-  // Check session key authorized, if not redirect to /
+func ControllerShowIndex(w http.ResponseWriter, r *http.Request) {
   http.ServeFile(w, r, "views/index.html")
 }
 
 func main() {
   r := mux.NewRouter()
-  r.HandleFunc("/", ShowIndex)
+  r.HandleFunc("/", ControllerShowIndex)
 
-  r.HandleFunc("/login", auth.Login).Methods("POST")
-  r.HandleFunc("/logout", auth.Logout)
+  r.HandleFunc("/login", auth.ControllerLogin).Methods("POST")
+  r.HandleFunc("/logout", auth.ControllerLogout)
 
-  r.HandleFunc("/assets", assets.ShowIndex)
-  r.HandleFunc("/assets/{id}/destroy/", assets.ControllerDestroyAsset)
-  // r.HandleFunc("/assets/{id}/edit/", assets.ControllerEditAsset)
+  r.HandleFunc("/assets", assets.ControllerShowIndex)
+  // r.HandleFunc("/assets/new", assets.ControllerNewAsset)
+  r.HandleFunc("/assets/{id}/destroy", assets.ControllerDestroyAsset)
+  // r.HandleFunc("/assets/{id}/edit", assets.ControllerEditAsset)
 
   http.Handle("/", r)
 

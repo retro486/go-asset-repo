@@ -62,12 +62,12 @@ func CheckAuthCookie(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-func Logout(w http.ResponseWriter, r *http.Request) {
+func ControllerLogout(w http.ResponseWriter, r *http.Request) {
   ClearAuthCookie(w, r)
   http.Redirect(w, r, "/", 302)
 }
 
-func Login(w http.ResponseWriter, r *http.Request) {
+func ControllerLogin(w http.ResponseWriter, r *http.Request) {
   if r.Method == "POST" {
     err := r.ParseForm()
     if err != nil {
@@ -90,7 +90,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
           // Set session key for authorized
           SetAuthCookie(w, r)
-          http.Redirect(w, r, "/manage", 302)
+          http.Redirect(w, r, "/assets", 302)
         } else {
           // ERROR: Invalid OTP value given.
           fmt.Printf("ERROR: Bad OTP\n")

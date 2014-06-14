@@ -133,7 +133,7 @@ func ControllerDestroyAsset(w http.ResponseWriter, r *http.Request) {
   http.Redirect(w, r, "/assets", 302)
 }
 
-func ShowIndex(w http.ResponseWriter, r *http.Request) {
+func ControllerShowIndex(w http.ResponseWriter, r *http.Request) {
   error := false
   auth.CheckAuthCookie(w, r)
   assets := LoadStoredAssets()
