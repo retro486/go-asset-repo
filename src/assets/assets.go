@@ -2,6 +2,7 @@ package assets
 
 import (
   "github.com/gorilla/mux"
+  "github.com/gorilla/schema"
   "auth"
   "net/http"
   "html/template"
@@ -14,9 +15,9 @@ import (
 
 type Asset struct {
   Id *int64
-  URL string
-  Name string
-  IsImage bool // for determining if a thumbnail preview should be shown
+  URL string `schema:"url"`
+  Name string `schema:"name"`
+  IsImage bool `schema:"isimage"` // for determining if a thumbnail preview should be shown
 }
 
 func GetDBConnection() *sql.DB {
@@ -132,6 +133,31 @@ func FindAsset(id int64) Asset {
   return Asset{Id: &id, URL: url, Name: name, IsImage: isImage}
 }
 
+func UpdateAsset(asset *Asset) error {
+  dbConn := GetDBConnection()
+  defer dbConn.Close()
+
+  tx, err := dbConn.Begin()
+  if err != nil {
+    return err
+  }
+
+  stmt, err := tx.Prepare("update assets set name = ?, url = ?, isimage = ? where id = ?")
+  if err != nil {
+    return err
+  }
+  defer stmt.Close()
+
+  _, err = stmt.Exec(asset.Name, asset.URL, asset.IsImage, &asset.Id)
+  if err != nil {
+    return err
+  }
+
+  tx.Commit()
+
+  return nil
+}
+
 func ControllerEditAsset(w http.ResponseWriter, r *http.Request) {
   error := false
   vars := mux.Vars(r)
@@ -178,5 +204,32 @@ func ControllerShowIndex(w http.ResponseWriter, r *http.Request) {
 
   if error {
     http.ServeFile(w, r, "views/error.html")
+  }
+}
+
+func ControllerUpdateAsset(w http.ResponseWriter, r *http.Request) {
+  vars := mux.Vars(r)
+  id, _ := strconv.ParseInt(vars["id"], 10, 32)
+
+  if r.Method == "POST" {
+    err := r.ParseForm()
+    if err != nil {
+      // ERROR: Unable to read form data.
+      fmt.Printf("ERROR: Bad form data\n")
+      http.Redirect(w, r, "/", 302)
+    } else {
+      asset := new(Asset)
+      decoder := schema.NewDecoder()
+
+      err := decoder.Decode(asset, r.PostForm)
+      if err == nil {
+        asset.Id = &id
+        _ = UpdateAsset(asset)
+      }
+
+      http.Redirect(w, r, "/assets", 302)
+    }
+  } else {
+    http.Redirect(w, r, "/assets", 302)
   }
 }
