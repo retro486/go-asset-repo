@@ -13,16 +13,14 @@ import (
 )
 
 type Asset struct {
-  Id int64
+  Id *int64
   URL string
   Name string
   IsImage bool // for determining if a thumbnail preview should be shown
 }
 
-var dbCreateSQL = "create table assets (id integer not null primary key autoincrement, name text, url text, isimage boolean);"
-// var dbConn = *sql.DB{}
-
 func GetDBConnection() *sql.DB {
+  dbCreateSQL := "create table assets (id integer not null primary key autoincrement, name text, url text, isimage boolean);"
   db, err := sql.Open("sqlite3", "assets.db")
   if err != nil {
     return nil
@@ -59,7 +57,8 @@ func CreateAsset(asset Asset) (Asset, error) {
 
   tx.Commit()
 
-  asset.Id, _ = result.LastInsertId()
+  id, _ := result.LastInsertId()
+  asset.Id = &id
   return asset, nil
 }
 
@@ -93,19 +92,6 @@ func LoadStoredAssets() []Asset {
   defer dbConn.Close()
   assets := []Asset{}
 
-  // _, err := CreateAsset(Asset{URL:"http://www.google.com", Name:"Google", IsImage:false})
-  // if err != nil {
-  //   fmt.Printf("%s\n", fmt.Errorf("%v", err))
-  // }
-  // _, err = CreateAsset(Asset{URL:"http://www.yahoo.com", Name:"Yahoo", IsImage:false})
-  // if err != nil {
-  //   fmt.Printf("%s\n", fmt.Errorf("%v", err))
-  // }
-  // _, err = CreateAsset(Asset{URL:"http://minionslovebananas.com/images/check-in-minion.jpg", Name:"Minion", IsImage:true})
-  // if err != nil {
-  //   fmt.Printf("%s\n", fmt.Errorf("%v", err))
-  // }
-
   rows, err := dbConn.Query("select id, name, url, isimage from assets")
   if err != nil {
     return nil
@@ -118,11 +104,55 @@ func LoadStoredAssets() []Asset {
     var url string
     var isImage bool
     rows.Scan(&id, &name, &url, &isImage)
-    assets = append(assets, Asset{Id: id, URL: url, Name: name, IsImage: isImage})
+    assets = append(assets, Asset{Id: &id, URL: url, Name: name, IsImage: isImage})
   }
   rows.Close()
 
   return assets
+}
+
+func FindAsset(id int64) Asset {
+  dbConn := GetDBConnection()
+  defer dbConn.Close()
+
+  stmt, err := dbConn.Prepare("select id, name, url, isimage from assets where id = ?")
+  if err != nil {
+    return Asset{}
+  }
+  defer stmt.Close()
+
+  var name string
+  var url string
+  var isImage bool
+  err = stmt.QueryRow(id).Scan(&id, &name, &url, &isImage)
+  if err != nil {
+    return Asset{}
+  }
+
+  return Asset{Id: &id, URL: url, Name: name, IsImage: isImage}
+}
+
+func ControllerEditAsset(w http.ResponseWriter, r *http.Request) {
+  error := false
+  vars := mux.Vars(r)
+  id, _ := strconv.ParseInt(vars["id"], 10, 32)
+  asset := FindAsset(id)
+  if asset.Id == nil {
+    // ERROR asset not found or DB error
+    http.Redirect(w, r, "/assets", 302)
+  }
+
+  tmpl, _ := template.ParseFiles("views/assets/edit.html")
+
+  err := tmpl.Execute(w, asset)
+  if err != nil {
+    fmt.Printf("Unable to write edit template to response.\n")
+    error = true
+  }
+
+  if error {
+    http.ServeFile(w, r, "views/error.html")
+  }
 }
 
 func ControllerDestroyAsset(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +172,7 @@ func ControllerShowIndex(w http.ResponseWriter, r *http.Request) {
 
   err := tmpl.Execute(w, map[string]interface{} { "Assets": assets })
   if err != nil {
-    fmt.Printf("Unable to write template to response.\n")
+    fmt.Printf("Unable to write index template to response.\n")
     error = true
   }
 

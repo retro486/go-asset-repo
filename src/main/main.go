@@ -24,7 +24,7 @@ func main() {
   r.HandleFunc("/assets", assets.ControllerShowIndex)
   // r.HandleFunc("/assets/new", assets.ControllerNewAsset)
   r.HandleFunc("/assets/{id}/destroy", assets.ControllerDestroyAsset)
-  // r.HandleFunc("/assets/{id}/edit", assets.ControllerEditAsset)
+  r.HandleFunc("/assets/{id}/edit", assets.ControllerEditAsset)
 
   http.Handle("/", r)
 
