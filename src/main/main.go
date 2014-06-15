@@ -19,13 +19,15 @@ func main() {
   r.HandleFunc("/", ControllerShowIndex)
 
   r.HandleFunc("/login", auth.ControllerLogin).Methods("POST")
-  r.HandleFunc("/logout", auth.ControllerLogout)
+  r.HandleFunc("/logout", auth.ControllerLogout).Methods("GET")
 
-  r.HandleFunc("/assets", assets.ControllerShowIndex)
-  // r.HandleFunc("/assets/new", assets.ControllerNewAsset)
-  r.HandleFunc("/assets/{id}/destroy", assets.ControllerDestroyAsset)
-  r.HandleFunc("/assets/{id}/edit", assets.ControllerEditAsset)
-  r.HandleFunc("/assets/{id}", assets.ControllerUpdateAsset)
+  r.HandleFunc("/assets", assets.ControllerShowIndex).Methods("GET")
+  r.HandleFunc("/assets", assets.ControllerCreateAsset).Methods("POST")
+  r.HandleFunc("/assets/new", assets.ControllerNewAsset).Methods("GET")
+  // r.HandleFunc("/assets/{id}", assets.ControllerShowAsset).Methods("GET")
+  r.HandleFunc("/assets/{id}/destroy", assets.ControllerDestroyAsset).Methods("GET")
+  r.HandleFunc("/assets/{id}/edit", assets.ControllerEditAsset).Methods("GET")
+  r.HandleFunc("/assets/{id}", assets.ControllerUpdateAsset).Methods("POST")
 
   http.Handle("/", r)
 

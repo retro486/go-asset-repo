@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Asset Manager</title>
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+
+    </script>
+    <style>
+
+    </style>
+  </head>
+  <body>
+    <h1>New Asset</h1>
+    <form method="post" action="/assets">
+      <div>
+        <label for="name">Name:</label>
+        <input type="text" name="name" id="name" value="{{.Name}}" />
+      </div>
+      <div>
+        <label for="url">URL:</label>
+        <input type="text" name="url" id="url" value="{{.URL}}" />
+      </div>
+      <div>
+        <label for="isimage">Treat as image?</label>
+        <input type="checkbox" name="isimage" id="isimage" {{if .IsImage}}checked{{end}} />
+      </div>
+
+      <input type="submit" value="Create Asset" />
+    </form>
+  </body>
+</html>
