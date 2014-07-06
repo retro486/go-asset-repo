@@ -6,6 +6,7 @@ Two birds, one stone.
 Environment variables required:
 
 * GOPATH - the top level project folder (where this README is located)
+* ASSET_REPO_TEMPLATES - The path where HTML templates are located
 * ASSET_REPO_UPLOAD_DIR - The path to upload files to
 * ASSET_REPO_BASE_URL - The URL where upload dir is accessible
 * ASSET_REPO_OTP - Your OTP secret

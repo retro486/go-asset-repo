@@ -8,10 +8,12 @@ import (
   "fmt"
   "log"
   "net/http"
+  "os"
 )
 
 func ControllerShowIndex(w http.ResponseWriter, r *http.Request) {
-  http.ServeFile(w, r, "views/index.html")
+  templatePath := os.Getenv("ASSET_REPO_TEMPLATES")
+  http.ServeFile(w, r, templatePath + "/index.html")
 }
 
 func main() {

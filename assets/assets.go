@@ -28,6 +28,7 @@ type Asset struct {
 }
 
 var formDecoder = schema.NewDecoder()
+var templatePath = os.Getenv("ASSET_REPO_TEMPLATES")
 
 func GetDBConnection() *sql.DB {
   dbCreateSQL := "create table assets (id integer not null primary key autoincrement, name text, url text, filename text, isimage boolean);"
@@ -178,7 +179,7 @@ func ControllerShowIndex(w http.ResponseWriter, r *http.Request) {
   error := false
   assets := LoadStoredAssets()
 
-  tmpl, _ := template.ParseFiles("views/assets/index.html")
+  tmpl, _ := template.ParseFiles(templatePath + "/assets/index.html")
 
   err := tmpl.Execute(w, map[string]interface{} { "Assets": assets })
   if err != nil {
@@ -187,7 +188,7 @@ func ControllerShowIndex(w http.ResponseWriter, r *http.Request) {
   }
 
   if error {
-    http.ServeFile(w, r, "views/error.html")
+    http.ServeFile(w, r, templatePath + "/error.html")
   }
 }
 
@@ -195,7 +196,7 @@ func ControllerNewAsset(w http.ResponseWriter, r *http.Request) {
   auth.CheckAuthCookie(w, r)
   error := false
 
-  tmpl, _ := template.ParseFiles("views/assets/new.html")
+  tmpl, _ := template.ParseFiles(templatePath + "/assets/new.html")
 
   err := tmpl.Execute(w, nil)
   if err != nil {
@@ -204,7 +205,7 @@ func ControllerNewAsset(w http.ResponseWriter, r *http.Request) {
   }
 
   if error {
-    http.ServeFile(w, r, "views/error.html")
+    http.ServeFile(w, r, templatePath + "/error.html")
   }
 }
 
@@ -278,7 +279,7 @@ func ControllerEditAsset(w http.ResponseWriter, r *http.Request) {
     http.Redirect(w, r, "/assets", 302)
   }
 
-  tmpl, _ := template.ParseFiles("views/assets/edit.html")
+  tmpl, _ := template.ParseFiles(templatePath + "/assets/edit.html")
 
   err := tmpl.Execute(w, asset)
   if err != nil {
@@ -287,7 +288,7 @@ func ControllerEditAsset(w http.ResponseWriter, r *http.Request) {
   }
 
   if error {
-    http.ServeFile(w, r, "views/error.html")
+    http.ServeFile(w, r, templatePath + "/error.html")
   }
 }
 
