@@ -15,6 +15,7 @@ import (
   "log"
   "database/sql"
   "strconv"
+  "net/url"
   _ "github.com/mattn/go-sqlite3"
 )
 
@@ -71,7 +72,7 @@ func FindAsset(id int64) Asset {
   dbConn := GetDBConnection()
   defer dbConn.Close()
 
-  stmt, err := dbConn.Prepare("select id, name, url, isimage from assets where id = ?")
+  stmt, err := dbConn.Prepare("select id, name, url, filename, isimage from assets where id = ?")
   if err != nil {
     return Asset{}
   }
@@ -79,13 +80,14 @@ func FindAsset(id int64) Asset {
 
   var name string
   var url string
+  var fileName string
   var isImage bool
-  err = stmt.QueryRow(id).Scan(&id, &name, &url, &isImage)
+  err = stmt.QueryRow(id).Scan(&id, &name, &url, &fileName, &isImage)
   if err != nil {
     return Asset{}
   }
 
-  return Asset{Id: &id, URL: url, Name: name, IsImage: isImage}
+  return Asset{Id: &id, URL: url, Name: name, FileName: fileName, IsImage: isImage}
 }
 
 func CreateAsset(asset *Asset) error {
@@ -97,13 +99,13 @@ func CreateAsset(asset *Asset) error {
     return err
   }
 
-  stmt, err := tx.Prepare("insert into assets(name, url, isimage) values (?, ?, ?)")
+  stmt, err := tx.Prepare("insert into assets(name, url, filename, isimage) values (?, ?, ?, ?)")
   if err != nil {
     return err
   }
   defer stmt.Close()
 
-  result, err := stmt.Exec(asset.Name, asset.URL, asset.IsImage)
+  result, err := stmt.Exec(asset.Name, asset.URL, asset.FileName, asset.IsImage)
   if err != nil {
     return err
   }
@@ -116,10 +118,10 @@ func CreateAsset(asset *Asset) error {
 }
 
 func DestroyAsset(id int64) error {
+  asset := FindAsset(id)
+
   dbConn := GetDBConnection()
   defer dbConn.Close()
-
-  asset := FindAsset(id)
 
   tx, err := dbConn.Begin()
   if err != nil {
@@ -136,7 +138,10 @@ func DestroyAsset(id int64) error {
   if err != nil {
     return err
   } else {
-    _ = os.Remove(asset.FileName)
+    err = os.Remove(asset.FileName)
+    if err != nil {
+      fmt.Printf("%q:%q\n", err, asset)
+    }
   }
 
   tx.Commit()
@@ -153,13 +158,13 @@ func UpdateAsset(asset *Asset) error {
     return err
   }
 
-  stmt, err := tx.Prepare("update assets set name = ?, url = ?, isimage = ? where id = ?")
+  stmt, err := tx.Prepare("update assets set name = ?, isimage = ? where id = ?")
   if err != nil {
     return err
   }
   defer stmt.Close()
 
-  _, err = stmt.Exec(asset.Name, asset.URL, asset.IsImage, &asset.Id)
+  _, err = stmt.Exec(asset.Name, asset.IsImage, &asset.Id)
   if err != nil {
     return err
   }
@@ -230,7 +235,7 @@ func ControllerCreateAsset(w http.ResponseWriter, r *http.Request) {
           if err == nil {
             if len(form.File["file"]) == 1 {
               fileName := form.File["file"][0].Filename
-              destFileName := os.Getenv("ASSET_REPO_UPLOAD_DIR") + "/" + fileName
+              destFileName := os.Getenv("ASSET_REPO_UPLOAD_DIR") + "/" + url.QueryEscape(fileName)
               asset.FileName = destFileName
               asset.URL = os.Getenv("ASSET_REPO_BASE_URL") + "/" + fileName
               // os.Copy(form.File["file"][0].tmpfile, destFileName)
