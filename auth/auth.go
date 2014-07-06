@@ -1,7 +1,7 @@
 package auth
 
 import (
-  "otp"
+  "github.com/retro486/go-asset-repo/otp"
   "github.com/gorilla/schema"
   "github.com/gorilla/securecookie"
   "fmt"

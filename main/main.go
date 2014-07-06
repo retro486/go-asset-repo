@@ -2,8 +2,8 @@
 package main
 
 import (
-  "auth"
-  "assets"
+  "github.com/retro486/go-asset-repo/auth"
+  "github.com/retro486/go-asset-repo/assets"
   "github.com/gorilla/mux"
   "fmt"
   "log"

@@ -3,7 +3,7 @@ package assets
 import (
   "github.com/gorilla/mux"
   "github.com/gorilla/schema"
-  "auth"
+  "github.com/retro486/go-asset-repo/auth"
   "net/http"
   "mime"
   "io/ioutil"
