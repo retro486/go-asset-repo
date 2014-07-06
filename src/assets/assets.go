@@ -5,8 +5,13 @@ import (
   "github.com/gorilla/schema"
   "auth"
   "net/http"
+  "mime"
+  "io/ioutil"
+  "mime/multipart"
   "html/template"
   "fmt"
+  "os"
+  "strings"
   "log"
   "database/sql"
   "strconv"
@@ -17,13 +22,14 @@ type Asset struct {
   Id *int64 `schema:"-"`
   URL string `schema:"url"`
   Name string `schema:"name"`
+  FileName string `schema:"filename"`
   IsImage bool `schema:"isimage"` // for determining if a thumbnail preview should be shown
 }
 
 var formDecoder = schema.NewDecoder()
 
 func GetDBConnection() *sql.DB {
-  dbCreateSQL := "create table assets (id integer not null primary key autoincrement, name text, url text, isimage boolean);"
+  dbCreateSQL := "create table assets (id integer not null primary key autoincrement, name text, url text, filename text, isimage boolean);"
   db, err := sql.Open("sqlite3", "assets.db")
   if err != nil {
     return nil
@@ -113,6 +119,8 @@ func DestroyAsset(id int64) error {
   dbConn := GetDBConnection()
   defer dbConn.Close()
 
+  asset := FindAsset(id)
+
   tx, err := dbConn.Begin()
   if err != nil {
     return err
@@ -127,6 +135,8 @@ func DestroyAsset(id int64) error {
   _, err = stmt.Exec(id)
   if err != nil {
     return err
+  } else {
+    _ = os.Remove(asset.FileName)
   }
 
   tx.Commit()
@@ -203,20 +213,53 @@ func ControllerCreateAsset(w http.ResponseWriter, r *http.Request) {
       fmt.Printf("ERROR: Bad form data\n")
       http.Redirect(w, r, "/", 302)
     } else {
-      asset := new(Asset)
-      err := formDecoder.Decode(asset, r.PostForm)
+      // err := formDecoder.Decode(asset, r.PostForm)
+      // if err == nil {
+      _, params, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
       if err == nil {
-        err = CreateAsset(asset)
+        mr := multipart.NewReader(r.Body, params["boundary"])
+        form, err := mr.ReadForm(1024)
+        if err == nil {
+          asset := new(Asset)
+          asset.Name = strings.Join(form.Value["name"], "")
+          if strings.Join(form.Value["isimage"],"") == "on" {
+            asset.IsImage = true
+          } else {
+            asset.IsImage = false
+          }
+          if err == nil {
+            if len(form.File["file"]) == 1 {
+              fileName := form.File["file"][0].Filename
+              destFileName := os.Getenv("ASSET_REPO_UPLOAD_DIR") + "/" + fileName
+              asset.FileName = destFileName
+              asset.URL = os.Getenv("ASSET_REPO_BASE_URL") + "/" + fileName
+              // os.Copy(form.File["file"][0].tmpfile, destFileName)
+              tmpFile, err := form.File["file"][0].Open()
+              if err == nil {
+                if err == nil {
+                  data, err := ioutil.ReadAll(tmpFile)
+                  if err == nil {
+                    err = ioutil.WriteFile(destFileName, data, 0660)
+                    if err == nil {
+                      err = CreateAsset(asset)
+                    }
+                    tmpFile.Close()
+                  }
+                }
+              }
+            }
+
+            form.RemoveAll()
+          }
+        }
       } else {
         fmt.Printf("%s\n", r.PostForm)
         fmt.Printf("%s\n", err)
       }
-
-      http.Redirect(w, r, "/assets", 302)
     }
-  } else {
-    http.Redirect(w, r, "/assets", 302)
   }
+
+  http.Redirect(w, r, "/assets", 302)
 }
 
 func ControllerEditAsset(w http.ResponseWriter, r *http.Request) {
