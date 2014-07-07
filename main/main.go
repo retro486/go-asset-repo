@@ -5,7 +5,6 @@ import (
   "github.com/retro486/go-asset-repo/auth"
   "github.com/retro486/go-asset-repo/assets"
   "github.com/gorilla/mux"
-  "fmt"
   "log"
   "net/http"
   "os"
@@ -33,6 +32,6 @@ func main() {
 
   http.Handle("/", r)
 
-  fmt.Printf("Listening on 0.0.0.0:8080...\n")
+  log.Print("Listening on 0.0.0.0:8080...\n")
   log.Fatal(http.ListenAndServe(":8080", nil))
 }

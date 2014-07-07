@@ -4,7 +4,7 @@ import (
   "github.com/retro486/go-asset-repo/otp"
   "github.com/gorilla/schema"
   "github.com/gorilla/securecookie"
-  "fmt"
+  "log"
   "net/http"
   "os"
   "strconv"
@@ -72,7 +72,7 @@ func ControllerLogin(w http.ResponseWriter, r *http.Request) {
     err := r.ParseForm()
     if err != nil {
       // ERROR: Unable to read form data.
-      fmt.Printf("ERROR: Bad form data\n")
+      log.Print("ERROR: Bad form data\n")
       http.Redirect(w, r, "/", 302)
     } else {
       otp_form := new(OTPForm)
@@ -81,19 +81,18 @@ func ControllerLogin(w http.ResponseWriter, r *http.Request) {
       cmp := gotp.Totp(GetPassword())
 
       if err != nil {
-        // ERROR: Unable to decode form data.
-        fmt.Printf("ERROR: Can't decode form\n")
+        log.Print("ERROR: Can't decode form\n")
       } else {
         str_i, _ := strconv.ParseUint(otp_form.OTP, 10, 32)
         if cmp == uint32(str_i) {
-          fmt.Printf("authorized\n")
+          log.Print("OTP Authorized\n")
 
           // Set session key for authorized
           SetAuthCookie(w, r)
           http.Redirect(w, r, "/assets", 302)
         } else {
           // ERROR: Invalid OTP value given.
-          fmt.Printf("ERROR: Bad OTP\n")
+          log.Print("ERROR: Bad OTP\n")
           http.Redirect(w, r, "/", 302)
         }
       }

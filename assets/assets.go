@@ -176,36 +176,30 @@ func UpdateAsset(asset *Asset) error {
 
 func ControllerShowIndex(w http.ResponseWriter, r *http.Request) {
   auth.CheckAuthCookie(w, r)
-  error := false
   assets := LoadStoredAssets()
 
-  tmpl, _ := template.ParseFiles(templatePath + "/assets/index.html")
-
-  err := tmpl.Execute(w, map[string]interface{} { "Assets": assets })
+  tmpl, err := template.ParseFiles(templatePath + "/assets/index.html")
   if err != nil {
-    fmt.Printf("Unable to write index template to response.\n")
-    error = true
+    log.Fatal("Template missing: " + templatePath + "/assets/index.html")
   }
 
-  if error {
-    http.ServeFile(w, r, templatePath + "/error.html")
+  err = tmpl.Execute(w, map[string]interface{} { "Assets": assets })
+  if err != nil {
+    log.Fatal("Unable to write index template to response.\n")
   }
 }
 
 func ControllerNewAsset(w http.ResponseWriter, r *http.Request) {
   auth.CheckAuthCookie(w, r)
-  error := false
 
-  tmpl, _ := template.ParseFiles(templatePath + "/assets/new.html")
-
-  err := tmpl.Execute(w, nil)
+  tmpl, err := template.ParseFiles(templatePath + "/assets/new.html")
   if err != nil {
-    fmt.Printf("Unable to write new template to response.\n")
-    error = true
+    log.Fatal("Template missing: " + templatePath + "/assets/new.html")
   }
 
-  if error {
-    http.ServeFile(w, r, templatePath + "/error.html")
+  err = tmpl.Execute(w, nil)
+  if err != nil {
+    log.Fatal("Unable to write new template to response.\n")
   }
 }
 
@@ -216,7 +210,7 @@ func ControllerCreateAsset(w http.ResponseWriter, r *http.Request) {
     err := r.ParseForm()
     if err != nil {
       // ERROR: Unable to read form data.
-      fmt.Printf("ERROR: Bad form data\n")
+      log.Print("ERROR: Bad form data\n")
       http.Redirect(w, r, "/", 302)
     } else {
       // err := formDecoder.Decode(asset, r.PostForm)
@@ -259,8 +253,7 @@ func ControllerCreateAsset(w http.ResponseWriter, r *http.Request) {
           }
         }
       } else {
-        fmt.Printf("%s\n", r.PostForm)
-        fmt.Printf("%s\n", err)
+        log.Print("ERROR: Bad form data\n")
       }
     }
   }
@@ -270,7 +263,6 @@ func ControllerCreateAsset(w http.ResponseWriter, r *http.Request) {
 
 func ControllerEditAsset(w http.ResponseWriter, r *http.Request) {
   auth.CheckAuthCookie(w, r)
-  error := false
   vars := mux.Vars(r)
   id, _ := strconv.ParseInt(vars["id"], 10, 32)
   asset := FindAsset(id)
@@ -279,16 +271,14 @@ func ControllerEditAsset(w http.ResponseWriter, r *http.Request) {
     http.Redirect(w, r, "/assets", 302)
   }
 
-  tmpl, _ := template.ParseFiles(templatePath + "/assets/edit.html")
-
-  err := tmpl.Execute(w, asset)
+  tmpl, err := template.ParseFiles(templatePath + "/assets/edit.html")
   if err != nil {
-    fmt.Printf("Unable to write edit template to response.\n")
-    error = true
+    log.Fatal("Template missing: " + templatePath + "/assets/edit.html")
   }
 
-  if error {
-    http.ServeFile(w, r, templatePath + "/error.html")
+  err = tmpl.Execute(w, asset)
+  if err != nil {
+    log.Fatal("Unable to write edit template to response.\n")
   }
 }
 
@@ -310,7 +300,7 @@ func ControllerUpdateAsset(w http.ResponseWriter, r *http.Request) {
     err := r.ParseForm()
     if err != nil {
       // ERROR: Unable to read form data.
-      fmt.Printf("ERROR: Bad form data\n")
+      log.Print("ERROR: Bad form data\n")
       http.Redirect(w, r, "/", 302)
     } else {
       asset := new(Asset)
