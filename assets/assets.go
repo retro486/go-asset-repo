@@ -46,6 +46,7 @@ func GetDBConnection() *sql.DB {
 }
 
 func LoadStoredAssets() []Asset {
+  // Loads ALL assets. TODO - allow pagination to save on memory when this list gets very large
   dbConn := GetDBConnection()
   defer dbConn.Close()
   assets := []Asset{}

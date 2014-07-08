@@ -3,6 +3,9 @@ I needed a simple asset repo to upload static assets for use on my blog and I wa
 
 Two birds, one stone.
 
+Install:
+go get github.com/retro486/go-asset-repo/...
+
 Environment variables required:
 
 * GOPATH - the top level project folder (where this README is located)
@@ -11,3 +14,8 @@ Environment variables required:
 * ASSET_REPO_BASE_URL - The URL where upload dir is accessible
 * ASSET_REPO_OTP - Your OTP secret
 * ASSET_REPO_HMAC - Your cookie secret
+
+Notes:
+* Tested on go 1.3. Not sure if it works on older versions. Doesn't work on version 1.0.
+* Some issue with uploading files and the default temp dir on linux. Need to look into it.
+
